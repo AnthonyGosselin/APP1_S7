@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from dnn_framework import FullyConnectedLayer, BatchNormalization, Sigmoid, ReLU
+from dnn_framework.solution.layers import FullyConnectedLayer, BatchNormalization, Sigmoid, ReLU
 from tests import test_layer_input_grad, test_layer_parameter_grad, DELTA
 
 

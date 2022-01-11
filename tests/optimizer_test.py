@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from dnn_framework import SgdOptimizer
+from dnn_framework.solution.optimizers import SgdOptimizer
 from tests import DELTA
 
 

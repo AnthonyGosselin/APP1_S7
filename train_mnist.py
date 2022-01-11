@@ -21,7 +21,9 @@ def main():
 
 
 def create_network(checkpoint_path):
-    layers = []
+    layers = [
+        FullyConnectedLayer(128),
+        ]
     network = Network(layers)
     if checkpoint_path is not None:
         network.load(checkpoint_path)
