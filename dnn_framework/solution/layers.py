@@ -74,7 +74,7 @@ class BatchNormalization(Layer):
         :param x: The input tensor
         :return: A tuple containing the output value and the cache (y, cache)
         """
-
+        # TODO: Lissage de mu et sigma avec alpha & ajustement de y avec gamma et beta (eq. 66)
         mu = np.mean(x)
         sigma = np.std(x)
 
@@ -92,6 +92,7 @@ class BatchNormalization(Layer):
                  a dictionary containing the gradient with respect to each parameter indexed with the same key
                  as the get_parameters() dictionary.
         """
+        # TODO: Tuple: (eq70, {eq71}
         raise NotImplementedError()
 
 

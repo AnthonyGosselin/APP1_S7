@@ -31,3 +31,8 @@ class MeanSquaredErrorLoss(Loss):
         :return A tuple containing the loss and the gradient with respect to the input (loss, input_grad)
         """
         raise NotImplementedError()
+
+
+def softmax():
+    # TODO: Voir eq.72
+    raise NotImplementedError()

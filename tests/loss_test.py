@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from dnn_framework.solution.losses import CrossEntropyLoss, MeanSquaredErrorLoss
+from dnn_framework import CrossEntropyLoss, MeanSquaredErrorLoss
 from tests import test_loss_input_grad, DELTA
 
 
