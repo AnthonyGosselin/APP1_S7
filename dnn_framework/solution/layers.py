@@ -35,7 +35,7 @@ class FullyConnectedLayer(Layer):
 
         y = self.w * x + self.b
 
-        cache = None  # TODO
+        cache = {"input": x}
         return (y, cache)
 
     def backward(self, output_grad, cache):
@@ -47,7 +47,12 @@ class FullyConnectedLayer(Layer):
                  a dictionary containing the gradient with respect to each parameter indexed with the same key
                  as the get_parameters() dictionary.
         """
-        raise NotImplementedError()
+        input_grad = np.matmul(np.transpose(self.w), output_grad)
+        w_grad = np.matmul(output_grad, np.transpose(cache["input"]))
+        b_grad = output_grad
+        grad_dict = {"w": w_grad, "b": b_grad}
+
+        return input_grad, grad_dict
 
 
 class BatchNormalization(Layer):
@@ -78,7 +83,7 @@ class BatchNormalization(Layer):
         mu = np.mean(x)
         sigma = np.std(x)
 
-        y = (x - mu)/sigma
+        y = (x - mu) / sigma
 
         cache = None  # TODO
         return (y, cache)
