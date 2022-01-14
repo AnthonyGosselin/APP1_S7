@@ -17,7 +17,7 @@ class LayerTestCase(unittest.TestCase):
         self.assertAlmostEqual(y[0], 0.5, delta=DELTA)
 
     def test_fully_connected_layer_forward_backward(self):
-        self.assertTrue(test_layer_input_grad(FullyConnectedLayer(4, 10), (2, 4)))
+        self.assertTrue(test_layer_input_grad(FullyConnectedLayer(4, 10), (2, 4)))  # NOTE: input tensor shape inversed??
         self.assertTrue(test_layer_parameter_grad(FullyConnectedLayer(4, 10), (2, 4), 'w'))
         self.assertTrue(test_layer_parameter_grad(FullyConnectedLayer(4, 10), (2, 4), 'b'))
 

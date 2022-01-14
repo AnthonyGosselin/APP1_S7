@@ -6,8 +6,9 @@ from dnn_framework.layer import Layer
 class FullyConnectedLayer(Layer):
 
     def __init__(self, intput_size, output_size):
-        self.w = np.zeros([intput_size, output_size])
-        self.b = np.zeros([1, self.output_size])
+        super().__init__()
+        self.w = np.zeros([output_size, intput_size])
+        self.b = np.zeros([output_size, 1])
 
     def get_parameters(self):
         """
@@ -33,10 +34,10 @@ class FullyConnectedLayer(Layer):
         :return: A tuple containing the output value and the cache (y, cache)
         """
 
-        y = self.w * x + self.b
+        y = np.matmul(self.w, x) + self.b  # Why do we need transpose for test to pass??
 
         cache = {"input": x}
-        return (y, cache)
+        return y, cache
 
     def backward(self, output_grad, cache):
         """
@@ -48,7 +49,7 @@ class FullyConnectedLayer(Layer):
                  as the get_parameters() dictionary.
         """
         input_grad = np.matmul(np.transpose(self.w), output_grad)
-        w_grad = np.matmul(output_grad, np.transpose(cache["input"]))
+        w_grad = np.matmul(output_grad, np.transpose(cache["input"]))  # Why remove transpose on input here for test to pass?
         b_grad = output_grad
         grad_dict = {"w": w_grad, "b": b_grad}
 
