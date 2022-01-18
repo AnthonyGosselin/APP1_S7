@@ -36,8 +36,10 @@ def test_grad(input_shape, forward, backward, X=None, output_grad=None):
 
 # ------------------------------ Layer functions ------------------------------
 def fully_connected_forward(W, b, X):
-    # <Your code here>
-    raise NotImplementedError()
+    # X([N,I]) * W([J,I]) + b([1, J])
+    mul = X @ W.T  # [N,J] = [N,I] @ [I,J]
+    Y = mul + b
+    return Y  # [N,J]
 
 
 def fully_connected_backward(W, b, X, output_grad):
@@ -74,18 +76,30 @@ def sigmoid_forward(X):
 
 
 def sigmoid_backward(X, output_grad):
-    # <Your code here>
-    raise NotImplementedError()
+    Y = 1 / (1 + np.exp(-X))
+    dydx = (1 - Y) * Y
+    dldx = dydx * output_grad
+
+    return dldx
 
 
 def bce_forward(x, target):
-    # <Your code here>
-    raise NotImplementedError()
+    # QUESTION N vs J
+    ln = np.log(x)
+    mul = target * ln
+    sum = np.sum(mul)
+    neg = -1 * (sum)
+    L = neg / len(x)
+
+    L2 = np.sum((-target * np.log(x) - (1 - target) * np.log(1 - x))) / len(x)
+    return L2
 
 
 def bce_backward(x, target):
-    # <Your code here>
-    raise NotImplementedError()
+    # return -1 * target / x
+    res = (-target/x + (1-target)/(1-x)) / len(x)
+    return res
+
 
 
 # ------------------------------ Test functions ------------------------------
@@ -258,11 +272,16 @@ def train(x_train, target_train, x_val=None, target_val=None, epoch_count=100, l
         dldx, dldw, dldb = fully_connected_backward(W1, b1, x_train, dldu)
 
         # Training: Descent gradient
-        # <Your code here>   
+        W1 -= learning_rate * dldw
+        b1 -= learning_rate * dldb
+        W2 -= learning_rate * dldw2
+        b2 -= learning_rate * dldb2
+        W3 -= learning_rate * dldw3
+        b3 -= learning_rate * dldb3
         
         # Training: Metrics
         losses_train.append(loss)        
-        predicted_classes = (y > 0.5).astype(int)
+        predicted_classes = (y_hat > 0.5).astype(int)
         
         accuracy = np.sum((predicted_classes == target_train)) / target_train.size
         accuracies_train.append(accuracy)
@@ -272,11 +291,17 @@ def train(x_train, target_train, x_val=None, target_val=None, epoch_count=100, l
         if x_val is not None and target_val is not None:
 
             # Validation: Forward pass
-            # <Your code here>
+            u = fully_connected_forward(W1, b1, x_val)
+            g = relu_forward(u)
+            v = fully_connected_forward(W2, b2, g)
+            h = relu_forward(v)
+            w = fully_connected_forward(W3, b3, h)
+            y_hat = sigmoid_forward(w)
+            loss = bce_forward(y_hat, target_val)
 
             # Validation: Metrics
             losses_val.append(loss)        
-            predicted_classes = (y > 0.5).astype(int)
+            predicted_classes = (y_hat > 0.5).astype(int)
             
             accuracy = np.sum((predicted_classes == target_val)) / target_val.size
             accuracies_val.append(accuracy)          
@@ -337,7 +362,12 @@ def show_decision_boundary(W1, b1, W2, b2, W3, b3):
 
 def show_classification(W1, b1, W2, b2, W3, b3, X, title=''):
 
-    # <Your code here, same as forward pass in train> 
+    u = fully_connected_forward(W1, b1, X)
+    g = relu_forward(u)
+    v = fully_connected_forward(W2, b2, g)
+    h = relu_forward(v)
+    w = fully_connected_forward(W3, b3, h)
+    y = sigmoid_forward(w)
     
     predicted_classes = (y > 0.5).astype(int)
 
