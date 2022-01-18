@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 
 
 # ------------------------------- Utils functions ------------------------------
+from tqdm import tqdm
+
+
 def assert_almost_equal(a, b):
     assert np.mean(np.abs(a - b)) < 1e-5
 
@@ -250,8 +253,8 @@ def train(x_train, target_train, x_val=None, target_val=None, epoch_count=100, l
     losses_val = []
     accuracies_val = []    
 
-    for epoch in range(epoch_count):
-        print('epoch={}'.format(epoch + 1))
+    for epoch in tqdm(range(epoch_count)):
+        # print('epoch={}'.format(epoch + 1))
         
         # Training: Forward pass
         u = fully_connected_forward(W1, b1, x_train)
@@ -286,7 +289,7 @@ def train(x_train, target_train, x_val=None, target_val=None, epoch_count=100, l
         accuracy = np.sum((predicted_classes == target_train)) / target_train.size
         accuracies_train.append(accuracy)
 
-        print('Training: loss={:.4f}, accuracy={:.4f}'.format(loss, accuracy))
+        # print('Training: loss={:.4f}, accuracy={:.4f}'.format(loss, accuracy))
 
         if x_val is not None and target_val is not None:
 
@@ -306,8 +309,8 @@ def train(x_train, target_train, x_val=None, target_val=None, epoch_count=100, l
             accuracy = np.sum((predicted_classes == target_val)) / target_val.size
             accuracies_val.append(accuracy)          
             
-            print('Validation: loss={:.4f}, accuracy={:.4f}'.format(loss, accuracy))
-        print()
+            # print('Validation: loss={:.4f}, accuracy={:.4f}'.format(loss, accuracy))
+        # print()
         
     show_learning_curves(losses_train, accuracies_train, title='Training')
     show_classification(W1, b1, W2, b2, W3, b3, x_train, title='Training')
