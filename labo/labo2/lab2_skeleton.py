@@ -41,23 +41,36 @@ def fully_connected_forward(W, b, X):
 
 
 def fully_connected_backward(W, b, X, output_grad):
-    # <Your code here>
-    raise NotImplementedError()
+
+    dldx = output_grad @ W      # [N,J] @ [J,I] = [N, I]
+    dldw = output_grad.T @ X    # [N, J].T @ [N, I] = [J, I]
+    dldb = np.sum(output_grad, axis=0)          # sum([N, J]) = [1,J]
+
+    return dldx, dldw, dldb
 
 
 def relu_forward(X):
-    # <Your code here>
-    raise NotImplementedError()
+    # X = [N, I]
+    Y = X.copy()
+    Y[Y < 0] = 0
+    return Y
 
 
 def relu_backward(X, output_grad):
-    # <Your code here>
-    raise NotImplementedError()
+    # dldx = dydx * dldy
+    Y = X.copy()
+    Y[Y < 0] = 0
+    Y[Y > 0] = 1
+    dldx = Y * output_grad      # [N,I] = [N,I] * [N,I]
+
+    return dldx
 
 
 def sigmoid_forward(X):
-    # <Your code here>
-    raise NotImplementedError()
+
+    Y = 1 / (1 + np.exp(-X))  # [N,I]
+
+    return Y
 
 
 def sigmoid_backward(X, output_grad):
@@ -227,11 +240,23 @@ def train(x_train, target_train, x_val=None, target_val=None, epoch_count=100, l
         print('epoch={}'.format(epoch + 1))
         
         # Training: Forward pass
-        # <Your code here>
+        u = fully_connected_forward(W1, b1, x_train)
+        g = relu_forward(u)
+        v = fully_connected_forward(W2, b2, g)
+        h = relu_forward(v)
+        w = fully_connected_forward(W3, b3, h)
+        y_hat = sigmoid_forward(w)
+        loss = bce_forward(y_hat, target_train)
         
         # Training: Backward pass
-        # <Your code here>
-        
+        dldy_hat = bce_backward(y_hat, target_train)
+        dldw = sigmoid_backward(w, dldy_hat)
+        dldh, dldw3, dldb3 = fully_connected_backward(W3, b3, h, dldw)
+        dldv = relu_backward(v, dldh)
+        dldg, dldw2, dldb2 = fully_connected_backward(W2, b2, g, dldv)
+        dldu = relu_backward(u, dldg)
+        dldx, dldw, dldb = fully_connected_backward(W1, b1, x_train, dldu)
+
         # Training: Descent gradient
         # <Your code here>   
         
@@ -296,8 +321,13 @@ def show_decision_boundary(W1, b1, W2, b2, W3, b3):
     x2 = np.arange(1, -1, -0.01)
     
     data = np.array(np.meshgrid(x1, x2)).T.reshape(-1,2)
-    
-    # <Your code here, same as forward pass in train>
+
+    u = fully_connected_forward(W1, b1, data)
+    g = relu_forward(u)
+    v = fully_connected_forward(W2, b2, g)
+    h = relu_forward(v)
+    w = fully_connected_forward(W3, b3, h)
+    y = sigmoid_forward(w)
     
     fig = plt.figure(figsize=(5, 5), dpi=200)
     ax = fig.add_subplot(111)
