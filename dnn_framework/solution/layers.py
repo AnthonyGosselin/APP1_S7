@@ -7,8 +7,16 @@ class FullyConnectedLayer(Layer):
 
     def __init__(self, intput_size, output_size):
         super().__init__()
-        self.w = np.zeros([output_size, intput_size])
-        self.b = np.zeros([output_size, 1])
+        # self.w = np.zeros([output_size, intput_size])
+        # self.b = np.zeros([output_size, 1])
+
+        # Initialize the weights with normal distribution
+        self.w = np.random.normal(loc=0.0,
+                                  scale=np.sqrt(2 / (intput_size + output_size)),
+                                  size=(output_size, intput_size))
+        self.b = np.random.normal(loc=0.0,
+                                  scale=np.sqrt(2 / output_size),
+                                  size=(output_size,))
 
     def get_parameters(self):
         """
@@ -19,22 +27,14 @@ class FullyConnectedLayer(Layer):
         parameters = {"w": self.w, "b": self.b}
         return parameters
 
-    def get_buffers(self):
-        """
-        This method returns the buffers of the layer.
-        The buffers are not learned by the optimizer.
-        :return: A dictionary (str: np.array) of the buffers
-        """
-        raise NotImplementedError()
-
     def forward(self, x):
         """
         This method performs the forward pass of the layer.
         :param x: The input tensor
         :return: A tuple containing the output value and the cache (y, cache)
         """
-
-        y = np.matmul(self.w, x) + self.b  # Why do we need transpose for test to pass??
+        B = self.b[np.newaxis]  # Turns one axis to 2 axis for transpose
+        y = self.w @ x.T + B.T  # TEST: [1,1] = [1,2] @ [2, 1] + [1,1]
 
         cache = {"input": x}
         return y, cache
@@ -48,9 +48,13 @@ class FullyConnectedLayer(Layer):
                  a dictionary containing the gradient with respect to each parameter indexed with the same key
                  as the get_parameters() dictionary.
         """
-        input_grad = np.matmul(np.transpose(self.w), output_grad)
-        w_grad = np.matmul(output_grad, np.transpose(cache["input"]))  # Why remove transpose on input here for test to pass?
-        b_grad = output_grad
+        X = cache['input']
+
+        input_grad = output_grad.T @ self.w
+
+        w_grad = output_grad @ X
+        b_grad = np.sum(output_grad, axis=1)            # TODO: CHECK IF SUM IS ON CORRECT AXIS
+
         grad_dict = {"w": w_grad, "b": b_grad}
 
         return input_grad, grad_dict
@@ -58,13 +62,31 @@ class FullyConnectedLayer(Layer):
 
 class BatchNormalization(Layer):
 
+    def __init__(self, size, g_mean=None, g_variance=None, alpha=0.5):
+        super().__init__()
+        self.gamma = np.ones(size)
+        self.beta = np.zeros(size)
+
+        self.global_mean = np.zeros(size)
+        if g_mean:
+            self.global_mean = g_mean
+
+        self.global_variance = np.zeros(size)
+        if g_variance:
+            self.global_variance = g_variance
+
+        self.alpha = alpha
+
+        self.EPSILON = 1e-20
+
     def get_parameters(self):
         """
         This method returns the parameters of the layer.
         The parameters are learned by the optimizer.
         :return: A dictionary (str: np.array) of the parameters
         """
-        raise NotImplementedError()
+        parameters = {'gamma': self.gamma, 'beta': self.beta}
+        return parameters
 
     def get_buffers(self):
         """
@@ -72,7 +94,8 @@ class BatchNormalization(Layer):
         The buffers are not learned by the optimizer.
         :return: A dictionary (str: np.array) of the buffers
         """
-        raise NotImplementedError()
+        buffer_dict = {'global_mean': self.global_mean, 'global_variance': self.global_variance}
+        return buffer_dict
 
     def forward(self, x):
         """
@@ -80,14 +103,23 @@ class BatchNormalization(Layer):
         :param x: The input tensor
         :return: A tuple containing the output value and the cache (y, cache)
         """
-        # TODO: Lissage de mu et sigma avec alpha & ajustement de y avec gamma et beta (eq. 66)
-        mu = np.mean(x)
-        sigma = np.std(x)
 
-        y = (x - mu) / sigma
+        # Lissage de mu et sigma avec alpha & ajustement de y avec gamma et beta (eq. 66)
+        if self.is_training():
+            mu = np.sum(x, axis=0) / x.shape[0]
+            self.global_mean = (1 - self.alpha) * self.global_mean + self.alpha * mu
+            sigma2 = np.sum(np.square(x-mu), axis=0) / x.shape[0]
+            self.global_variance = (1 - self.alpha) * self.global_variance + self.alpha * sigma2
+        else:
+            mu = self.global_mean
+            sigma2 = self.global_variance
 
-        cache = None  # TODO
-        return (y, cache)
+        x_hat = (x - mu) / np.sqrt(sigma2 + self.EPSILON)
+
+        y = self.gamma * x_hat + self.beta
+
+        cache = {'input': x, "x_hat": x_hat, 'y': y, 'mu': mu, 'sigma2': sigma2}
+        return y, cache
 
     def backward(self, output_grad, cache):
         """
@@ -99,26 +131,41 @@ class BatchNormalization(Layer):
                  as the get_parameters() dictionary.
         """
         # TODO: Tuple: (eq70, {eq71}
-        raise NotImplementedError()
+
+        x = cache["input"]
+        sigma2 = cache["sigma2"]
+        mu = cache["mu"]
+        x_hat = cache["x_hat"]
+        sigma_epsilon = sigma2 + self.EPSILON
+        sigma_epsilon_root = np.sqrt(sigma_epsilon)
+        M = len(x)
+
+        # TODO: CHECK IF SUMS ARE OK
+
+        dldy = output_grad
+
+        # EQ. 67
+        dldx_hat = dldy * self.gamma
+
+        # EQ. 68
+        dldsigma2 = np.sum( dldx_hat * (x - mu) * (-0.5) * np.power( sigma_epsilon, -3/2 ), axis=0 )
+
+        # EQ. 69
+        dldmu = (-1 * np.sum(dldx_hat, axis=0) / sigma_epsilon_root) - 2/M * dldsigma2 * np.sum(x-mu, axis=0)
+
+        # EQ. 70
+        dldx = dldx_hat / sigma_epsilon_root + 2/M * dldsigma2 * (x - mu) + 1/M * dldmu
+
+        # EQ. 71
+        dldgamma = np.sum(dldy * x_hat, axis=0)
+        dldbeta = np.sum(dldy, axis=0)
+
+        grad_dict = {'gamma': dldgamma, 'beta': dldbeta}
+
+        return dldx, grad_dict
 
 
 class ReLU(Layer):
-
-    def get_parameters(self):
-        """
-        This method returns the parameters of the layer.
-        The parameters are learned by the optimizer.
-        :return: A dictionary (str: np.array) of the parameters
-        """
-        raise NotImplementedError()
-
-    def get_buffers(self):
-        """
-        This method returns the buffers of the layer.
-        The buffers are not learned by the optimizer.
-        :return: A dictionary (str: np.array) of the buffers
-        """
-        raise NotImplementedError()
 
     def forward(self, x):
         """
@@ -129,8 +176,8 @@ class ReLU(Layer):
         y = x.copy()
         y[y < 0] = 0
 
-        cache = None  # TODO
-        return (y, cache)
+        cache = {"input": x}  # TODO
+        return y, cache
 
     def backward(self, output_grad, cache):
         """
@@ -141,26 +188,19 @@ class ReLU(Layer):
                  a dictionary containing the gradient with respect to each parameter indexed with the same key
                  as the get_parameters() dictionary.
         """
-        raise NotImplementedError()
+        # dldx = dydx * dldy
+        X = cache['input']
+        Y = X.copy()
+        Y[Y < 0] = 0
+        Y[Y > 0] = 1
+        x_grad = Y * output_grad  # [N,I] = [N,I] * [N,I]
+
+        grad_dict = {}  #TODO: ???
+
+        return x_grad, grad_dict
 
 
 class Sigmoid(Layer):
-
-    def get_parameters(self):
-        """
-        This method returns the parameters of the layer.
-        The parameters are learned by the optimizer.
-        :return: A dictionary (str: np.array) of the parameters
-        """
-        raise NotImplementedError()
-
-    def get_buffers(self):
-        """
-        This method returns the buffers of the layer.
-        The buffers are not learned by the optimizer.
-        :return: A dictionary (str: np.array) of the buffers
-        """
-        raise NotImplementedError()
 
     def forward(self, x):
         """
@@ -171,8 +211,8 @@ class Sigmoid(Layer):
 
         y = 1 / (1 + np.exp(-x))
 
-        cache = None  # TODO
-        return (y, cache)
+        cache = {'input': x}
+        return y, cache
 
     def backward(self, output_grad, cache):
         """
@@ -183,4 +223,13 @@ class Sigmoid(Layer):
                  a dictionary containing the gradient with respect to each parameter indexed with the same key
                  as the get_parameters() dictionary.
         """
-        raise NotImplementedError()
+
+        X = cache['input']
+
+        Y = 1 / (1 + np.exp(-X))
+        dydx = (1 - Y) * Y
+        x_grad = dydx * output_grad
+
+        grad_dict = {}  # TODO: ???
+
+        return x_grad, grad_dict
