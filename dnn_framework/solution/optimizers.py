@@ -7,7 +7,7 @@ class SgdOptimizer(Optimizer):
     Every layer class must inherit from this class and must overload the _step_parameter method.
     """
 
-    def __init__(self, parameters):
+    def __init__(self, parameters, learning_rate):
         self._parameters = parameters
 
     def step(self, parameter_grads):
@@ -26,4 +26,8 @@ class SgdOptimizer(Optimizer):
         :param parameter_name: The parameter name
         :return: The new value of the parameter
         """
-        raise NotImplementedError()
+        # # parameter = "layer#.param_name"
+        # layer_idx = parameter.split('.')
+
+        parameter -= self.learning_rate * parameter_grad
+        return parameter

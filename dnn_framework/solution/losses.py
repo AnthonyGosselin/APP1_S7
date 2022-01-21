@@ -14,18 +14,28 @@ class CrossEntropyLoss(Loss):
         :return A tuple containing the loss and the gradient with respect to the input (loss, input_grad)
         """
 
+        # Somme sur les classes et moyenne sur les exemples
+
+        # Convert target to one-hot
+        target_onehot = np.zeros(x.shape)
+        target = np.expand_dims(target, axis=1)
+        np.put_along_axis(target_onehot, target, 1, axis=1)
+
         y = softmax(x)
-        T = target[np.newaxis]
 
         ln = np.log(y)
-        mul = T @ ln.T
-        sum = np.sum(mul)
+        mul = target_onehot * ln
+        sum = np.sum(mul) / x.shape[0]
         loss = -1 * sum
-        # loss = neg / len(x)
 
-        loss2 = -np.sum(T.T * np.log(y).T)
+        loss2 = -np.sum(target_onehot * np.log(y))
 
-        input_grad = -1 * T.T / x
+        # BCE grad
+        output_grad = -1 * target_onehot / y
+
+        # Softmax grad
+        input_grad = softmax_grad(y, output_grad)
+
 
         return loss, input_grad
 
@@ -63,7 +73,7 @@ def softmax(x):
     y2 = e_x / np.sum(e_x, axis=0)
 
     L1 = np.linalg.norm(np.exp(x), 1, axis=1)
-    y = np.exp(x).T / L1
+    y = np.exp(x) / np.expand_dims(L1, axis=1)
 
     return y
 

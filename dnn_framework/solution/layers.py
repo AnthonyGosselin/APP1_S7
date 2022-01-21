@@ -5,15 +5,15 @@ from dnn_framework.layer import Layer
 
 class FullyConnectedLayer(Layer):
 
-    def __init__(self, intput_size, output_size):
+    def __init__(self, input_size, output_size):
         super().__init__()
         # self.w = np.zeros([output_size, intput_size])
         # self.b = np.zeros([output_size, 1])
 
         # Initialize the weights with normal distribution
         self.w = np.random.normal(loc=0.0,
-                                  scale=np.sqrt(2 / (intput_size + output_size)),
-                                  size=(output_size, intput_size))
+                                  scale=np.sqrt(2 / (input_size + output_size)),
+                                  size=(output_size, input_size))
         self.b = np.random.normal(loc=0.0,
                                   scale=np.sqrt(2 / output_size),
                                   size=(output_size,))
@@ -34,8 +34,7 @@ class FullyConnectedLayer(Layer):
         :return: A tuple containing the output value and the cache (y, cache)
         """
         B = self.b[np.newaxis]  # Turns one axis to 2 axis for transpose
-        y = self.w @ x.T + B.T  # TEST: [1,1] = [1,2] @ [2, 1] + [1,1]
-
+        y = x @ self.w.T + B
         cache = {"input": x}
         return y, cache
 
@@ -166,6 +165,12 @@ class BatchNormalization(Layer):
 
 
 class ReLU(Layer):
+
+    def get_parameters(self):
+        return {}
+
+    def get_buffers(self):
+        return {}
 
     def forward(self, x):
         """

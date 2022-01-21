@@ -16,11 +16,17 @@ def main():
     args = parser.parse_args()
 
     network = create_network(args.checkpoint_path)
+
+    # Predict
+    # network.eval()
+
+    # Train
     trainer = MnistTrainer(network, args.learning_rate, args.epoch_count, args.batch_size, args.output_path)
     trainer.train()
 
 
 def create_network(checkpoint_path):
+    alpha = 0.1
     layers = [
         FullyConnectedLayer(128),
         ]

@@ -202,6 +202,7 @@ def test_bce_backward():
     print('------------test_bce_backward------------')
     X = np.array([0.1, 0.6])
     target = np.array([0.0, 1.0])
+
     output_grad = 1
     def forward(X):
         return bce_forward(X, target)
