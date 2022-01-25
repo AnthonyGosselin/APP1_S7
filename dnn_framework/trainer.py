@@ -1,5 +1,6 @@
 import os
 import time
+import numpy as np
 
 from tqdm import tqdm
 
@@ -40,7 +41,7 @@ class Trainer:
         self._validation_dataset_loader = DatasetLoader(self._validation_dataset, batch_size=batch_size, shuffle=False)
         self._test_dataset_loader = DatasetLoader(self._test_dataset, batch_size=batch_size, shuffle=False)
 
-    def train(self):
+    def train(self, losses=None, name=None):
         """
         Train the network.
         """
@@ -48,21 +49,28 @@ class Trainer:
 
         for epoch in range(self._epoch_count):
             print('Training - Epoch [{}/{}]'.format(epoch + 1, self._epoch_count), flush=True)
-            self._train_one_epoch()
+            train_loss = self._train_one_epoch()
 
             print('\nValidation - Epoch [{}/{}]'.format(epoch + 1, self._epoch_count), flush=True)
-            self._validate()
+            valid_loss = self._validate()
 
             self._save_checkpoint(epoch + 1)
             self._save_figures(self._output_path)
             self._print_metrics()
 
+        run_results = {'train_loss': float(train_loss), 'valid_loss': float(valid_loss)}
+        losses[name] = run_results
+
         print('\nTest')
         self._network.eval()
         self._test(self._network, self._test_dataset_loader)
 
+        return losses
+
     def _train_one_epoch(self):
         self._clear_between_training_epoch()
+
+        losses = []
 
         self._network.train()
         for x, target in tqdm(self._training_dataset_loader):
@@ -71,16 +79,25 @@ class Trainer:
             parameter_grads = self._network.backward(y_grad)
             self._optimizer.step(parameter_grads)
 
+            losses.append(loss)
+
             self._measure_training_metrics(loss, y, target)
+
+        return np.mean(losses)
 
     def _validate(self):
         self._clear_between_validation_epoch()
+
+        losses = []
 
         self._network.eval()
         for x, target in tqdm(self._validation_dataset_loader):
             y = self._network.forward(x)
             loss, _ = self._loss.calculate(y, target)
+            losses.append(loss)
             self._measure_validation_metrics(loss, y, target)
+
+        return np.mean(losses)
 
     def _save_checkpoint(self, epoch):
         self._network.save(os.path.join(self._output_path, 'checkpoint_epoch_{}.pkl'.format(epoch)))
