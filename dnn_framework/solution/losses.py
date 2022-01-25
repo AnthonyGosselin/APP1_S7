@@ -28,9 +28,9 @@ class CrossEntropyLoss(Loss):
         sum = np.sum(mul) / x.shape[0]
         loss = -1 * sum
 
-        loss2 = -np.sum(target_onehot * np.log(y))
+        # loss = -np.sum(target_onehot * np.log(y))
 
-        # BCE grad
+        # CE grad
         output_grad = -1 * target_onehot / y
 
         # Softmax grad
