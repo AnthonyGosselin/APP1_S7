@@ -9,6 +9,7 @@ class SgdOptimizer(Optimizer):
 
     def __init__(self, parameters, learning_rate):
         self._parameters = parameters
+        self.learning_rate = learning_rate
 
     def step(self, parameter_grads):
         """

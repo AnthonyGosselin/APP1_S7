@@ -94,8 +94,8 @@ def bce_forward(x, target):
     neg = -1 * (sum)
     L = neg / len(x)
 
-    L2 = np.sum((-target * np.log(x) - (1 - target) * np.log(1 - x))) / len(x)
-    return L2
+    # L2 = np.sum((-target * np.log(x) - (1 - target) * np.log(1 - x))) / len(x)
+    return L
 
 
 def bce_backward(x, target):
@@ -190,8 +190,8 @@ def test_sigmoid_backward():
 
 def test_bce_forward():
     print('------------test_bce_forward-------------')
-    x = np.array([0.1, 0.6])
-    target = np.array([0.0, 1.0])
+    x = np.array([0.9, 0.6])
+    target = np.array([1.0, 1.0])
     y = bce_forward(x, target)
 
     assert_almost_equal(y, 0.3081)

@@ -2,7 +2,7 @@ import argparse
 import cv2
 import numpy as np
 
-from dnn_framework import Network, FullyConnectedLayer, BatchNormalization, ReLU
+from dnn_framework import Network, FullyConnectedLayer, BatchNormalization, ReLU, CrossEntropyLoss
 from mnist import MnistTrainer
 from dnn_framework.solution.losses import softmax
 
@@ -51,7 +51,13 @@ def main():
 def create_network(checkpoint_path):
     alpha = 0.1
     layers = [
-        FullyConnectedLayer(128),
+        FullyConnectedLayer(input_size=784, output_size=128),
+        BatchNormalization(size=128, alpha=alpha),
+        ReLU(),
+        FullyConnectedLayer(input_size=128, output_size=32),
+        BatchNormalization(size=32, alpha=alpha),
+        ReLU(),
+        FullyConnectedLayer(input_size=32, output_size=10)
         ]
     network = Network(layers)
     if checkpoint_path is not None:

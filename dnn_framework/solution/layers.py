@@ -27,6 +27,9 @@ class FullyConnectedLayer(Layer):
         parameters = {"w": self.w, "b": self.b}
         return parameters
 
+    def get_buffers(self):
+        return {}
+
     def forward(self, x):
         """
         This method performs the forward pass of the layer.
@@ -49,10 +52,10 @@ class FullyConnectedLayer(Layer):
         """
         X = cache['input']
 
-        input_grad = output_grad.T @ self.w
+        input_grad = output_grad @ self.w
 
-        w_grad = output_grad @ X
-        b_grad = np.sum(output_grad, axis=1)            # TODO: CHECK IF SUM IS ON CORRECT AXIS
+        w_grad = output_grad.T @ X
+        b_grad = np.sum(output_grad, axis=0)            # TODO: CHECK IF SUM IS ON CORRECT AXIS
 
         grad_dict = {"w": w_grad, "b": b_grad}
 
@@ -63,8 +66,8 @@ class BatchNormalization(Layer):
 
     def __init__(self, size, g_mean=None, g_variance=None, alpha=0.5):
         super().__init__()
-        self.gamma = np.ones(size)
-        self.beta = np.zeros(size)
+        self.gamma = np.ones([1, size])
+        self.beta = np.zeros([1, size])
 
         self.global_mean = np.zeros(size)
         if g_mean:
@@ -106,8 +109,10 @@ class BatchNormalization(Layer):
         # Lissage de mu et sigma avec alpha & ajustement de y avec gamma et beta (eq. 66)
         if self.is_training():
             mu = np.sum(x, axis=0) / x.shape[0]
+            mu = np.expand_dims(mu, axis=0)
             self.global_mean = (1 - self.alpha) * self.global_mean + self.alpha * mu
             sigma2 = np.sum(np.square(x-mu), axis=0) / x.shape[0]
+            sigma2 = np.expand_dims(sigma2, axis=0)
             self.global_variance = (1 - self.alpha) * self.global_variance + self.alpha * sigma2
         else:
             mu = self.global_mean
@@ -115,7 +120,8 @@ class BatchNormalization(Layer):
 
         x_hat = (x - mu) / np.sqrt(sigma2 + self.EPSILON)
 
-        y = self.gamma * x_hat + self.beta
+        y = x_hat * self.gamma
+        y += self.beta
 
         cache = {'input': x, "x_hat": x_hat, 'y': y, 'mu': mu, 'sigma2': sigma2}
         return y, cache

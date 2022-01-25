@@ -63,3 +63,6 @@ class MnistTrainer(Trainer):
             test_accuracy_metric.add(y, target)
 
         print('Accuracy={}'.format(test_accuracy_metric.get_accuracy()))
+
+    # def infer(self, network, img):
+

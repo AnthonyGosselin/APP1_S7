@@ -65,17 +65,34 @@ class MeanSquaredErrorLoss(Loss):
 
 def softmax(x):
     # TODO: Voir eq.72
-
-    sum_exp = np.sum(np.exp(x), axis=0)
-    y_0 = np.exp(x) / sum_exp
-
-    e_x = np.exp(x - np.max(x))
-    y2 = e_x / np.sum(e_x, axis=0)
-
     L1 = np.linalg.norm(np.exp(x), 1, axis=1)
     y = np.exp(x) / np.expand_dims(L1, axis=1)
 
     return y
 
-def softmax_grad(input, input_grad):
-    pass
+def softmax_grad(y, output_grad):
+
+    # y: [2,3]   :  [ [1.0, 2.0, 3.0], [2.0, 1.0, 5.0] ]
+    # D : [2,3,3]
+    I = y.shape[1]
+    J = y.shape[1]
+    D = np.empty([y.shape[0], I, J], 'float')
+    for b in range(len(y)):
+        for i in range(I):
+            for j in range(J):
+                if i != j:
+                    D[b][i][j] = -y[b][i] * y[b][j]
+                elif i == j:
+                    D[b][i][j] = y[b][j] * (1 - y[b][j])
+
+
+    input_grad = np.zeros(output_grad.shape)
+    for b in range(len(D)):
+        for i in range(I):
+            res = D[b][i] * output_grad[b]
+            res_sum = np.sum(res)
+            input_grad[b][i] = res_sum
+
+    # input_grad2 = np.sum(D, axis=2) * output_grad
+
+    return input_grad
