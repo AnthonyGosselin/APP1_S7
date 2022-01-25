@@ -47,7 +47,7 @@ def main():
     if args.predict:
         # Predict
         network.eval()
-        image_path = "input_images/seven_corner.png"
+        image_path = "input_images/trash.png"
         image_batch = prepare_image_batch(file_path=image_path)
         output = network.forward(image_batch)
         print("OUTPUT:", np.around(softmax(output), 3))

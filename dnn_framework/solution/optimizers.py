@@ -27,8 +27,6 @@ class SgdOptimizer(Optimizer):
         :param parameter_name: The parameter name
         :return: The new value of the parameter
         """
-        # # parameter = "layer#.param_name"
-        # layer_idx = parameter.split('.')
 
         parameter -= self.learning_rate * parameter_grad
         return parameter

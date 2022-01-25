@@ -7,8 +7,6 @@ class FullyConnectedLayer(Layer):
 
     def __init__(self, input_size, output_size):
         super().__init__()
-        # self.w = np.zeros([output_size, intput_size])
-        # self.b = np.zeros([output_size, 1])
 
         # Initialize the weights with normal distribution
         self.w = np.random.normal(loc=0.0,
@@ -55,7 +53,7 @@ class FullyConnectedLayer(Layer):
         input_grad = output_grad @ self.w
 
         w_grad = output_grad.T @ X
-        b_grad = np.sum(output_grad, axis=0)            # TODO: CHECK IF SUM IS ON CORRECT AXIS
+        b_grad = np.sum(output_grad, axis=0)
 
         grad_dict = {"w": w_grad, "b": b_grad}
 
@@ -187,7 +185,7 @@ class ReLU(Layer):
         y = x.copy()
         y[y < 0] = 0
 
-        cache = {"input": x}  # TODO
+        cache = {"input": x}
         return y, cache
 
     def backward(self, output_grad, cache):
@@ -206,7 +204,7 @@ class ReLU(Layer):
         Y[Y > 0] = 1
         x_grad = Y * output_grad  # [N,I] = [N,I] * [N,I]
 
-        grad_dict = {}  #TODO: ???
+        grad_dict = {}
 
         return x_grad, grad_dict
 
