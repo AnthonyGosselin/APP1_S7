@@ -38,7 +38,8 @@ def main():
     if args.predict:
         # Predict
         network.eval()
-        image_batch = prepare_image_batch(file_path="input_images/four_triangle2.png")
+        image_path = "input_images/seven_corner.png"
+        image_batch = prepare_image_batch(file_path=image_path)
         output = network.forward(image_batch)
         print("OUTPUT:", np.around(softmax(output), 3))
         print(f"Detected number is {np.argmax(output)}")
